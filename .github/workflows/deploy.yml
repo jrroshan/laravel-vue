@@ -1,1 +1,26 @@
-
+name:Build & deploy
+on:
+  push:
+    branches:[main]
+  jobs:
+    deploy:
+      runs-on: debian11
+      uses: appleboy/ssh-action@v0.1.2
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        key: ${{ secrest.SSH_KEY }}
+        username: ${{ secrets.SSH_USERNAME }}
+      
+      script:
+        git clone git@github.com:jrroshan/laravel-vue.git
+        cd larave-vue
+        composer install
+        npm install
+        cp .env.example .env
+        php artisan key:generate
+        - name: Execute tests (Unit and Feature tests) via PHPUnit
+          env:
+          DB_CONNECTION=mysql
+          DB_DATABASE=laravel_vue
+          DB_USERNAME=root
+          DB_PASSWORD=
