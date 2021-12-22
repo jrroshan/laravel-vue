@@ -7,7 +7,10 @@
                     class="_1adminOverveiw_table_recent _box_shadow _border_radious _mar_b30 _p20"
                 >
                     <p class="_title0">
-                        Tags <Button><Icon type="md-add" />Add New Tag</Button>
+                        Tags
+                        <Button @click="addModal = true"
+                            ><Icon type="md-add" />Add New Tag</Button
+                        >
                     </p>
 
                     <div class="_overflow _table_div">
@@ -22,13 +25,12 @@
                             <!-- TABLE TITLE -->
 
                             <!-- ITEMS -->
-                            <tr>
-                                <td>1</td>
+                            <tr v-for="(tag,i) in tags" :key="i" v-if="tags.length">
+                                <td>{{ tag.id }}</td>
                                 <td class="_table_name">
-                                    Manhattan's art center "Shed" opening
-                                    ceremony
+                                    {{tag.tagName}}
                                 </td>
-                                <td>Economy</td>
+                                <td>{{tag.created_at}}</td>
                                 <td>
                                     <button
                                         class="_btn _action_btn edit_btn1"
@@ -48,6 +50,32 @@
                         </table>
                     </div>
                 </div>
+                <!-- Tags adding modal -->
+                <Modal
+                    v-model="addModal"
+                    title="Add Tag"
+                    :mask-closable="false"
+                    :closable="false"
+                >
+                    <Input
+                        v-model="data.tagName"
+                        placeholder="Add Tag Name"
+                        style="width: 300px"
+                    />
+                    <div slot="footer">
+                        <button type="default" @click="addModal = false">
+                            Close
+                        </button>
+                        <button
+                            type="primary"
+                            @click="addTag"
+                            :disabled="isAdding"
+                            :loading="isAdding"
+                        >
+                            {{ isAdding ? "Adding" : "Add tag" }}
+                        </button>
+                    </div>
+                </Modal>
             </div>
         </div>
     </div>
@@ -57,16 +85,36 @@
 export default {
     data() {
         return {
-            tagName: ''
+            data: {
+                tagName: "",
+            },
+            addModal: false,
+            isAdding: false,
+            tags: [],
         };
+    },
+    methods: {
+        async addTag() {
+            if (this.data.tagName.trim() == "")
+                return this.error("tag name is required");
+            const res = await this.callApi("post", "app/create_tag", this.data);
+            if (res.status === 201) {
+                this.tags.unshift(res.data);
+                this.success("Tag has been added successfully");
+                this.addModal = false;
+                this.data.tagName = ''
+            } else {
+                this.somethingWentWrong();
+            }
+        },
     },
 
     async created() {
-        const res = await this.callApi("post", "/app/create_tag", {
-            tagName: "testtag",
-        });
-        if (res.status == 200) {
-            // console.log(res);
+        const res = await this.callApi("get", "app/get_tags");
+        if (res.status === 200) {
+            this.tags = res.data;
+        } else {
+            this.somethingWentWrong();
         }
     },
 };
